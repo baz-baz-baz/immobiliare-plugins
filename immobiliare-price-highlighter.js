@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Price Highlighter
+// @name         Price Highlighter Githib Sync
 // @namespace    http://tampermonkey.net/
 // @version      1.5
 // @description  Highlight properties on Immobiliare.it that are below average price per square meter and show scostamento percentage
