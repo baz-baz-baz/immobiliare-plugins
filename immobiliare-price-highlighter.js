@@ -5,8 +5,8 @@
 // @description  Highlight properties on Immobiliare.it that are below average price per square meter and show scostamento percentage
 // @author       You
 // @match        https://www.immobiliare.it/*
-// @updateURL    https://raw.githubusercontent.com/baz-baz-baz/immobiliare-plugins/refs/heads/main/immobiliare-price-highlighter.js
-// @downloadURL  https://raw.githubusercontent.com/baz-baz-baz/immobiliare-plugins/refs/heads/main/immobiliare-price-highlighter.js
+// @updateURL    https://raw.githubusercontent.com/baz-baz-baz/immobiliare-plugins/main/immobiliare-price-highlighter.js
+// @downloadURL  https://raw.githubusercontent.com/baz-baz-baz/immobiliare-plugins/main/immobiliare-price-highlighter.js
 // @grant        none
 // ==/UserScript==
 
