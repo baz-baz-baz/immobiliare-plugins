@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Save Property Data to TXT
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.6
 // @description  Extracts property name, price, and size from Immobiliare.it and formats for Google Sheets
 // @author       You
 // @match        *://www.immobiliare.it/*
@@ -58,7 +58,7 @@
         if (extractedData.length > 0) {
             let content = extractedData.join("\n"); // Each property on a new line
             saveTextFile("property_data.txt", content);
-            alert("Property data has been saved! Copy-pasting will now work correctly in Google Sheets.");
+            alert("Property data has been saved!");
         } else {
             alert("No property data found.");
         }
