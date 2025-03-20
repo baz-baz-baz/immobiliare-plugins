@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Save Property Data to TXT
+// @name         Save Property Data to Clipboard
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  Extracts property name, price, and size from Immobiliare.it and formats for Google Sheets
 // @author       You
 // @match        *://www.immobiliare.it/*
@@ -48,7 +48,7 @@
 
             // Copy the data to the clipboard
             navigator.clipboard.writeText(content).then(() => {
-                alert("Property data has been copied to clipboard!");
+                alert("Property data has been copied to clipboard! You can now paste it into Google Sheets.");
             }).catch(err => {
                 alert("Failed to copy data to clipboard: " + err);
             });
@@ -57,12 +57,12 @@
         }
     }
 
-    // Create a modern floating button
+    // Create a side button
     let button = document.createElement("button");
-    button.innerText = "📄 Copia Dati";
+    button.innerText = "📄";
     button.style.position = "fixed";
-    button.style.top = "15px";
-    button.style.right = "15px"; // Moved to top-right for better UX
+    button.style.top = "50%";
+    button.style.left = "0"; // Positioned to the left side
     button.style.zIndex = "9999";
     button.style.padding = "12px 18px";
     button.style.backgroundColor = "#007BFF"; // Modern blue color
@@ -70,20 +70,34 @@
     button.style.fontSize = "14px";
     button.style.fontWeight = "600";
     button.style.border = "none";
-    button.style.marginTop = "44px";
     button.style.borderRadius = "8px"; // Rounded edges
     button.style.boxShadow = "0px 4px 6px rgba(0, 0, 0, 0.1)"; // Subtle shadow
     button.style.cursor = "pointer";
-    button.style.transition = "all 0.2s ease-in-out";
+    button.style.transition = "all 0.3s ease-in-out";
+    button.style.width = "50px"; // Narrow width initially
+    button.style.height = "50px"; // Make the button square
+    button.style.textAlign = "center"; // Center the text
+    button.style.overflow = "hidden"; // Hide the expanded text when not hovered
 
-    // Hover effect
+    // Add the text that will appear after expansion
+    let buttonText = document.createElement("span");
+    buttonText.innerText = " Copia Dati";
+    buttonText.style.display = "none"; // Initially hidden
+    button.appendChild(buttonText);
+
+    // Hover effect to show the full button
     button.onmouseover = function() {
+        button.style.width = "200px"; // Expand the button width on hover
+        buttonText.style.display = "inline"; // Show the full text
         button.style.backgroundColor = "#0056b3"; // Darker blue
         button.style.transform = "scale(1.05)"; // Slightly enlarge
     };
+
     button.onmouseleave = function() {
-        button.style.backgroundColor = "#007BFF";
-        button.style.transform = "scale(1)";
+        button.style.width = "50px"; // Reset width
+        buttonText.style.display = "none"; // Hide the text
+        button.style.backgroundColor = "#007BFF"; // Reset to original color
+        button.style.transform = "scale(1)"; // Reset to original size
     };
 
     button.onclick = extractAndCopy;
