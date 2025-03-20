@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Price Highlighter for Immobiliare.it
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.8
 // @description  Highlight properties on Immobiliare.it that are below average price per square meter and show scostamento percentage
 // @author       You
 // @match        https://www.immobiliare.it/*
