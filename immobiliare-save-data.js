@@ -39,7 +39,7 @@
                     if (match) sqm = match[1];
                 });
 
-                extractedData.push(`${title}\t\t${sqm}\t${price}`);
+                extractedData.push(`${title}\t${sqm}\t${price}`);
             }
         });
 
