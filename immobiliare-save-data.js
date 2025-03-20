@@ -13,24 +13,14 @@
 (function() {
     'use strict';
 
-    function saveTextFile(filename, content) {
-        const blob = new Blob([content], { type: 'text/plain' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-     function parsePrice(priceText) {
+    function parsePrice(priceText) {
         let cleanedText = priceText.replace(/\./g, "");
         let match = cleanedText.match(/\d+/);
 
         return match ? parseFloat(match[0]) : 0;
     }
 
-    function extractAndSave() {
+    function extractAndCopy() {
         let listings = document.querySelectorAll(".nd-mediaObject__content.in-listingCardPropertyContent");
         let extractedData = [];
 
@@ -43,32 +33,33 @@
                 let title = titleElement.innerText.trim();
                 let price = parsePrice(priceElement.innerText);
 
-                // Find the square meters from feature list
                 let sqm = "N/A";
                 featureElements.forEach(feature => {
                     let match = feature.innerText.match(/(\d+)\s*m²/);
                     if (match) sqm = match[1];
                 });
 
-                // Format the output with tabs so it pastes correctly into Google Sheets
                 extractedData.push(`${title}\t\t${sqm}\t${price}`);
             }
         });
 
         if (extractedData.length > 0) {
-            let content = extractedData.join("\n"); // Each property on a new line
-            saveTextFile("property_data.txt", content);
-            alert("Property data has been saved!");
+            let content = extractedData.join("\n");
+
+            // Copy the data to the clipboard
+            navigator.clipboard.writeText(content).then(() => {
+                alert("Property data has been copied to clipboard!");
+            }).catch(err => {
+                alert("Failed to copy data to clipboard: " + err);
+            });
         } else {
             alert("No property data found.");
         }
-
-
     }
 
     // Create a modern floating button
     let button = document.createElement("button");
-    button.innerText = "📄 Salva Dati";
+    button.innerText = "📄 Copia Dati";
     button.style.position = "fixed";
     button.style.top = "15px";
     button.style.right = "15px"; // Moved to top-right for better UX
@@ -79,6 +70,7 @@
     button.style.fontSize = "14px";
     button.style.fontWeight = "600";
     button.style.border = "none";
+    button.style.marginTop = "44px";
     button.style.borderRadius = "8px"; // Rounded edges
     button.style.boxShadow = "0px 4px 6px rgba(0, 0, 0, 0.1)"; // Subtle shadow
     button.style.cursor = "pointer";
@@ -94,6 +86,6 @@
         button.style.transform = "scale(1)";
     };
 
-    button.onclick = extractAndSave;
+    button.onclick = extractAndCopy;
     document.body.appendChild(button);
 })();
