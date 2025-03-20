@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Save Property Data to Clipboard
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.8
 // @description  Extracts property name, price, and size from Immobiliare.it and formats for Google Sheets
 // @author       You
 // @match        *://www.immobiliare.it/*
