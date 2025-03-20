@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         Save Property Data to TXT
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.5
 // @description  Extracts property name, price, and size from Immobiliare.it and formats for Google Sheets
 // @author       You
 // @match        *://www.immobiliare.it/*
-// @updateURL    https://raw.githubusercontent.com/baz-baz-baz/immobiliare-plugins/refs/heads/main/immobiliare-save-data.js
-// @downloadURL  https://raw.githubusercontent.com/baz-baz-baz/immobiliare-plugins/refs/heads/main/immobiliare-save-data.js
+// @updateURL    https://raw.githubusercontent.com/baz-baz-baz/immobiliare-plugins/main/immobiliare-save-data.js
+// @downloadURL  https://raw.githubusercontent.com/baz-baz-baz/immobiliare-plugins/main/immobiliare-save-data.js
 // @grant        none
 // ==/UserScript==
 
