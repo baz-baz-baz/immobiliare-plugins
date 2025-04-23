@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Save Property Data to Clipboard
 // @namespace    http://tampermonkey.net/
-// @version      1.8
+// @version      1.9
 // @description  Extracts property name, price, and size from Immobiliare.it
 // @author       You
 // @match        *://www.immobiliare.it/*
@@ -21,41 +21,44 @@
     }
 
     function extractAndCopy() {
-        let listings = document.querySelectorAll(".nd-mediaObject__content.in-listingCardPropertyContent");
-        let extractedData = [];
+    let listings = document.querySelectorAll(".nd-mediaObject__content.in-listingCardPropertyContent");
+    let extractedData = [];
 
-        listings.forEach(listing => {
-            let titleElement = listing.querySelector(".in-listingCardTitle");
-            let priceElement = listing.querySelector(".in-listingCardPrice");
-            let featureElements = listing.querySelectorAll(".in-listingCardFeatureList__item");
+    listings.forEach(listing => {
+        let titleElement = listing.querySelector(".in-listingCardTitle");
+        let priceElement = listing.querySelector(".in-listingCardPrice");
+        let featureElements = listing.querySelectorAll(".in-listingCardFeatureList__item");
 
-            if (titleElement && priceElement && featureElements.length > 0) {
-                let title = titleElement.innerText.trim();
-                let price = parsePrice(priceElement.innerText);
+        if (titleElement && priceElement && featureElements.length > 0) {
+            let title = titleElement.innerText.trim();
+            let url = titleElement.getAttribute("href");
+            let price = parsePrice(priceElement.innerText);
 
-                let sqm = "N/A";
-                featureElements.forEach(feature => {
-                    let match = feature.innerText.match(/(\d+)\s*m²/);
-                    if (match) sqm = match[1];
-                });
-
-                extractedData.push(`${title}\t${sqm}\t${price}`);
-            }
-        });
-
-        if (extractedData.length > 0) {
-            let content = extractedData.join("\n");
-
-            // Copy the data to the clipboard
-            navigator.clipboard.writeText(content).then(() => {
-                alert("Property data has been copied to clipboard! You can now paste it into Google Sheets.");
-            }).catch(err => {
-                alert("Failed to copy data to clipboard: " + err);
+            let sqm = "N/A";
+            featureElements.forEach(feature => {
+                let match = feature.innerText.match(/(\d+)\s*m²/);
+                if (match) sqm = match[1];
             });
-        } else {
-            alert("No property data found.");
+
+            // Format for Google Sheets: =HYPERLINK("url", "title")
+            let linkedTitle = `=HYPERLINK("${url}"; "${title.replace(/"/g, '""')}")`;
+            extractedData.push(`${linkedTitle}\t${sqm}\t${price}`);
         }
+    });
+
+    if (extractedData.length > 0) {
+        let content = extractedData.join("\n");
+
+        navigator.clipboard.writeText(content).then(() => {
+            alert("Property data with clickable links copied for Google Sheets!");
+        }).catch(err => {
+            alert("Failed to copy data to clipboard: " + err);
+        });
+    } else {
+        alert("No property data found.");
     }
+}
+
 
     // Create a side button
     let button = document.createElement("button");
