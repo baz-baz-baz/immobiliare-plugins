@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Save Property Data to Clipboard
 // @namespace    http://tampermonkey.net/
-// @version      1.9
+// @version      2.0
 // @description  Extracts property name, price, and size from Immobiliare.it
 // @author       You
 // @match        *://www.immobiliare.it/*
@@ -21,13 +21,13 @@
     }
 
     function extractAndCopy() {
-    let listings = document.querySelectorAll(".nd-mediaObject__content.in-listingCardPropertyContent");
+    let listings = document.querySelectorAll(".nd-mediaObject__content.styles_in-listingCardPropertyContent__tfu8w");
     let extractedData = [];
 
     listings.forEach(listing => {
-        let titleElement = listing.querySelector(".in-listingCardTitle");
-        let priceElement = listing.querySelector(".in-listingCardPrice");
-        let featureElements = listing.querySelectorAll(".in-listingCardFeatureList__item");
+        let titleElement = listing.querySelector("a.styles_in-listingCardTitle__Wy437");
+        let priceElement = listing.querySelector(".styles_in-listingCardPrice__earBq span");
+        let featureElements = listing.querySelectorAll(".styles_in-listingCardFeatureList__item__CKRyT");
 
         if (titleElement && priceElement && featureElements.length > 0) {
             let title = titleElement.innerText.trim();
@@ -40,7 +40,6 @@
                 if (match) sqm = match[1];
             });
 
-            // Format for Google Sheets: =HYPERLINK("url", "title")
             let linkedTitle = `=HYPERLINK("${url}"; "${title.replace(/"/g, '""')}")`;
             extractedData.push(`${linkedTitle}\t${sqm}\t${price}`);
         }
