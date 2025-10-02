@@ -74,7 +74,7 @@
                 const title = realEstate.title || "N/A";
                 const link = item.seo && item.seo.url ? item.seo.url : "#";
                 const prop = realEstate.properties[0];
-                const surface = prop ? prop.surface : "N/A";
+                const surface = prop && prop.surface ? String(prop.surface).replace(/\D/g,'') : "N/A";
                 const price = realEstate.price ? realEstate.price.value : "N/A";
 
                 const excelTitle = `=COLLEG.IPERTESTUALE("${link}";"${title}")`;
