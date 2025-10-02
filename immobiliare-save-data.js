@@ -1,107 +1,91 @@
 // ==UserScript==
-// @name         Save Property Data to Clipboard
+// @name         Immobiliare.it Excel + URL JSON
 // @namespace    http://tampermonkey.net/
-// @version      2.0
-// @description  Extracts property name, price, and size from Immobiliare.it
-// @author       You
-// @match        *://www.immobiliare.it/*
+// @version      1.2
+// @description  Estrae titolo, MQ, prezzo da Immobiliare.it e copia pronto per Excel
+// @author       Emiliano
+// @match        https://www.immobiliare.it/search-list/*
 // @updateURL    https://raw.githubusercontent.com/baz-baz-baz/immobiliare-plugins/main/immobiliare-save-data.js
 // @downloadURL  https://raw.githubusercontent.com/baz-baz-baz/immobiliare-plugins/main/immobiliare-save-data.js
-// @grant        none
+// @grant        GM_setClipboard
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    function parsePrice(priceText) {
-        let cleanedText = priceText.replace(/\./g, "");
-        let match = cleanedText.match(/\d+/);
+    // Crea il bottone
+    const btn = document.createElement('button');
+    btn.textContent = "Copy!";
 
-        return match ? parseFloat(match[0]) : 0;
-    }
+    // Stili principali
+    btn.style.position = "fixed";
+    btn.style.top = "50%"; // metà pagina verticale
+    btn.style.left = "0%"// verso sinistra
+    btn.style.transform = "translateY(-50%)"; // centra verticalmente rispetto al top
+    btn.style.zIndex = 10000;
+    btn.style.padding = "12px 20px";
+    btn.style.backgroundColor = "#7FDBFF"; // azzurro chiaro
+    btn.style.color = "#000";//testo nero
+    btn.style.border = "none";
+    btn.style.borderRadius = "5px";
+    btn.style.cursor = "pointer";
+    btn.style.fontFamily = "'Montserrat', sans-serif";
+    btn.style.fontSize = "14px";
+    btn.style.transition = "all 0.2s ease"; // transizione per hover
 
-    function extractAndCopy() {
-    let listings = document.querySelectorAll(".nd-mediaObject__content.styles_in-listingCardPropertyContent__tfu8w");
-    let extractedData = [];
-
-    listings.forEach(listing => {
-        let titleElement = listing.querySelector("a.styles_in-listingCardTitle__Wy437");
-        let priceElement = listing.querySelector(".styles_in-listingCardPrice__earBq span");
-        let featureElements = listing.querySelectorAll(".styles_in-listingCardFeatureList__item__CKRyT");
-
-        if (titleElement && priceElement && featureElements.length > 0) {
-            let title = titleElement.innerText.trim();
-            let url = titleElement.getAttribute("href");
-            let price = parsePrice(priceElement.innerText);
-
-            let sqm = "N/A";
-            featureElements.forEach(feature => {
-                let match = feature.innerText.match(/(\d+)\s*m²/);
-                if (match) sqm = match[1];
-            });
-
-            let linkedTitle = `=HYPERLINK("${url}"; "${title.replace(/"/g, '""')}")`;
-            extractedData.push(`${linkedTitle}\t${sqm}\t${price}`);
-        }
+    // Hover effect
+    btn.addEventListener("mouseenter", () => {
+        btn.style.backgroundColor = "#39C0ED"; // colore più scuro al passaggio del mouse
+        btn.style.transform = "translateY(-50%) scale(1.05)";
+    });
+    btn.addEventListener("mouseleave", () => {
+        btn.style.backgroundColor = "#7FDBFF";
+        btn.style.transform = "translateY(-50%) scale(1)";
     });
 
-    if (extractedData.length > 0) {
-        let content = extractedData.join("\n");
+    document.body.appendChild(btn);
 
-        navigator.clipboard.writeText(content).then(() => {
-            alert("Property data with clickable links copied for Google Sheets!");
-        }).catch(err => {
-            alert("Failed to copy data to clipboard: " + err);
-        });
-    } else {
-        alert("No property data found.");
-    }
-}
+    // Funzione del bottone
+    btn.addEventListener('click', () => {
+        const apiUrl = performance.getEntriesByType("resource")
+            .map(e => e.name)
+            .find(u => u.startsWith("https://www.immobiliare.it/api-next/search-list/listings/?"));
 
+        if(!apiUrl) {
+            alert("URL JSON non trovato. Interagisci con la mappa o aggiorna la lista e riprova.");
+            return;
+        }
 
-    // Create a side button
-    let button = document.createElement("button");
-    button.innerText = "📄";
-    button.style.position = "fixed";
-    button.style.top = "50%";
-    button.style.left = "0"; // Positioned to the left side
-    button.style.zIndex = "9999";
-    button.style.padding = "12px 18px";
-    button.style.backgroundColor = "#007BFF"; // Modern blue color
-    button.style.color = "#fff";
-    button.style.fontSize = "14px";
-    button.style.fontWeight = "600";
-    button.style.border = "none";
-    button.style.borderRadius = "8px"; // Rounded edges
-    button.style.boxShadow = "0px 4px 6px rgba(0, 0, 0, 0.1)"; // Subtle shadow
-    button.style.cursor = "pointer";
-    button.style.transition = "all 0.3s ease-in-out";
-    button.style.width = "50px"; // Narrow width initially
-    button.style.height = "50px"; // Make the button square
-    button.style.textAlign = "center"; // Center the text
-    button.style.overflow = "hidden"; // Hide the expanded text when not hovered
+        console.log("URL JSON trovato:", apiUrl);
 
-    // Add the text that will appear after expansion
-    let buttonText = document.createElement("span");
-    buttonText.innerText = " Copia Dati";
-    buttonText.style.display = "none"; // Initially hidden
-    button.appendChild(buttonText);
+        fetch(apiUrl, {
+            headers: {
+                "Accept": "application/json",
+                "X-Requested-With": "XMLHttpRequest"
+            },
+            credentials: "include"
+        })
+        .then(response => response.json())
+        .then(data => {
+            const listings = data.results;
 
-    // Hover effect to show the full button
-    button.onmouseover = function() {
-        button.style.width = "200px"; // Expand the button width on hover
-        buttonText.style.display = "inline"; // Show the full text
-        button.style.backgroundColor = "#0056b3"; // Darker blue
-        button.style.transform = "scale(1.05)"; // Slightly enlarge
-    };
+            const output = listings.map(item => {
+                const realEstate = item.realEstate;
+                const title = realEstate.title || "N/A";
+                const link = item.seo && item.seo.url ? item.seo.url : "#";
+                const prop = realEstate.properties[0];
+                const surface = prop ? prop.surface : "N/A";
+                const price = realEstate.price ? realEstate.price.value : "N/A";
 
-    button.onmouseleave = function() {
-        button.style.width = "50px"; // Reset width
-        buttonText.style.display = "none"; // Hide the text
-        button.style.backgroundColor = "#007BFF"; // Reset to original color
-        button.style.transform = "scale(1)"; // Reset to original size
-    };
+                const excelTitle = `=COLLEG.IPERTESTUALE("${link}";"${title}")`;
 
-    button.onclick = extractAndCopy;
-    document.body.appendChild(button);
+                return `${excelTitle}\t${surface}\t${price}`;
+            }).join("\n");
+
+            console.log(output);
+            GM_setClipboard(output);
+            alert("Dati pronti per Excel copiati negli appunti!");
+        })
+        .catch(err => console.error("Errore nella richiesta:", err));
+    });
 })();
