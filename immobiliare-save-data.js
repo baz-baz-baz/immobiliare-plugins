@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Immobiliare.it Excel + URL JSON
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Estrae titolo, MQ, prezzo da Immobiliare.it e copia pronto per Excel
 // @author       Emiliano
 // @match        https://www.immobiliare.it/search-list/*
