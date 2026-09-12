@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Immobiliare.it Excel + URL JSON
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  Estrae titolo, MQ, prezzo da Immobiliare.it e copia pronto per Excel
 // @author       Emiliano
 // @match        https://www.immobiliare.it/search-list/*
@@ -10,87 +10,47 @@
 // @grant        GM_setClipboard
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
-    const API_PREFIX =
-        "https://www.immobiliare.it/api-next/search-list/listings/?";
-
-    let capturedApiUrl = null;
+    const API_BASE =
+        'https://www.immobiliare.it/api-next/search-list/listings/';
 
     // ============================================================
-    // CAPTURE FETCH REQUESTS
+    // GET CURRENT PAGE NUMBER
     // ============================================================
 
-    const originalFetch = window.fetch;
+    function getCurrentPage() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('pag') || '1';
+    }
 
-    window.fetch = function(...args) {
-        try {
-            const url =
-                typeof args[0] === 'string'
-                    ? args[0]
-                    : args[0] instanceof Request
-                        ? args[0].url
-                        : '';
 
-            if (url.startsWith(API_PREFIX)) {
-                capturedApiUrl = url;
-                console.log("Immobiliare API captured:", capturedApiUrl);
-            }
-        } catch (e) {
-            console.warn("Fetch interception error:", e);
+    // ============================================================
+    // BUILD API URL FROM CURRENT PAGE URL
+    // ============================================================
+
+    function buildApiUrl() {
+
+        const pageUrl = new URL(window.location.href);
+
+        const pageParams = pageUrl.searchParams;
+
+        const apiParams = new URLSearchParams();
+
+        // Copy all search parameters from the Immobiliare page
+        for (const [key, value] of pageParams.entries()) {
+            apiParams.append(key, value);
         }
 
-        return originalFetch.apply(this, args);
-    };
+        // Make sure the page parameter is present
+        apiParams.set('pag', getCurrentPage());
 
+        // These parameters are used by Immobiliare's API
+        apiParams.set('paramsCount', '5');
+        apiParams.set('path', '/search-list/');
 
-    // ============================================================
-    // CAPTURE XMLHttpRequest REQUESTS
-    // ============================================================
-
-    const originalOpen = XMLHttpRequest.prototype.open;
-
-    XMLHttpRequest.prototype.open = function(method, url, ...rest) {
-
-        try {
-            if (
-                typeof url === 'string' &&
-                url.startsWith(API_PREFIX)
-            ) {
-                capturedApiUrl = url;
-                console.log("Immobiliare XHR API captured:", capturedApiUrl);
-            }
-        } catch (e) {
-            console.warn("XHR interception error:", e);
-        }
-
-        return originalOpen.call(this, method, url, ...rest);
-    };
-
-
-    // ============================================================
-    // ALSO CHECK PERFORMANCE RESOURCES
-    // ============================================================
-
-    function findLatestApiUrl() {
-
-        // First use the most recently intercepted URL
-        if (capturedApiUrl) {
-            return capturedApiUrl;
-        }
-
-        // Otherwise look through network resources
-        const resources = performance
-            .getEntriesByType("resource")
-            .map(e => e.name)
-            .filter(u => u.startsWith(API_PREFIX));
-
-        if (resources.length > 0) {
-            return resources[resources.length - 1];
-        }
-
-        return null;
+        return API_BASE + '?' + apiParams.toString();
     }
 
 
@@ -100,68 +60,65 @@
 
     const btn = document.createElement('button');
 
-    btn.textContent = "Copy!";
+    btn.textContent = 'Copy!';
 
-    btn.style.position = "fixed";
-    btn.style.top = "50%";
-    btn.style.left = "0%";
-    btn.style.transform = "translateY(-50%)";
-    btn.style.zIndex = "10000";
-    btn.style.padding = "12px 20px";
-    btn.style.backgroundColor = "#7FDBFF";
-    btn.style.color = "#000";
-    btn.style.border = "none";
-    btn.style.borderRadius = "5px";
-    btn.style.cursor = "pointer";
+    btn.style.position = 'fixed';
+    btn.style.top = '50%';
+    btn.style.left = '0';
+    btn.style.transform = 'translateY(-50%)';
+    btn.style.zIndex = '10000';
+    btn.style.padding = '12px 20px';
+    btn.style.backgroundColor = '#7FDBFF';
+    btn.style.color = '#000';
+    btn.style.border = 'none';
+    btn.style.borderRadius = '5px';
+    btn.style.cursor = 'pointer';
     btn.style.fontFamily = "'Montserrat', sans-serif";
-    btn.style.fontSize = "14px";
-    btn.style.transition = "all 0.2s ease";
+    btn.style.fontSize = '14px';
+    btn.style.transition = 'all 0.2s ease';
 
-    btn.addEventListener("mouseenter", () => {
-        btn.style.backgroundColor = "#39C0ED";
+    btn.addEventListener('mouseenter', () => {
+        btn.style.backgroundColor = '#39C0ED';
         btn.style.transform =
-            "translateY(-50%) scale(1.05)";
+            'translateY(-50%) scale(1.05)';
     });
 
-    btn.addEventListener("mouseleave", () => {
-        btn.style.backgroundColor = "#7FDBFF";
+    btn.addEventListener('mouseleave', () => {
+        btn.style.backgroundColor = '#7FDBFF';
         btn.style.transform =
-            "translateY(-50%) scale(1)";
+            'translateY(-50%) scale(1)';
     });
 
     document.body.appendChild(btn);
 
 
     // ============================================================
-    // COPY DATA
+    // COPY BUTTON
     // ============================================================
 
     btn.addEventListener('click', async () => {
 
-        const apiUrl = findLatestApiUrl();
+        const currentPage = getCurrentPage();
+        const apiUrl = buildApiUrl();
 
-        if (!apiUrl) {
-            alert(
-                "URL JSON non trovato.\n\n" +
-                "Vai alla pagina dei risultati e attendi che gli annunci siano caricati, " +
-                "poi premi Copy!"
-            );
-            return;
-        }
+        console.log('Current Immobiliare page:', currentPage);
+        console.log('API URL:', apiUrl);
 
-        console.log("Using Immobiliare API URL:", apiUrl);
-
-        btn.textContent = "Loading...";
+        btn.textContent = 'Loading...';
 
         try {
 
             const response = await fetch(apiUrl, {
+                method: 'GET',
+
                 headers: {
-                    "Accept": "application/json",
-                    "X-Requested-With": "XMLHttpRequest"
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
-                credentials: "include"
+
+                credentials: 'include'
             });
+
 
             if (!response.ok) {
                 throw new Error(
@@ -169,55 +126,78 @@
                 );
             }
 
+
             const data = await response.json();
+
+            console.log(
+                'Immobiliare API response:',
+                data
+            );
+
+
+            // ====================================================
+            // GET LISTINGS
+            // ====================================================
 
             const listings = data?.results;
 
-            if (!listings || listings.length === 0) {
+
+            if (!Array.isArray(listings) || listings.length === 0) {
+
                 alert(
-                    "Nessun annuncio trovato nella risposta API."
+                    `Nessun annuncio trovato nella pagina ${currentPage}.`
                 );
 
-                btn.textContent = "Copy!";
                 return;
             }
 
 
             // ====================================================
-            // CONVERT LISTINGS TO EXCEL FORMAT
+            // CONVERT LISTINGS TO EXCEL
             // ====================================================
 
             const output = listings.map(item => {
 
-                const realEstate = item.realEstate;
+                const realEstate = item?.realEstate;
 
                 const title =
-                    realEstate?.title || "N/A";
+                    realEstate?.title || 'N/A';
+
 
                 const link =
-                    item.seo?.url || "#";
+                    item?.seo?.url || '#';
 
+
+                // ------------------------------------------------
+                // SURFACE
+                // ------------------------------------------------
 
                 const prop =
                     realEstate?.properties?.[0];
 
-                const surface = prop?.surface
-                    ? String(prop.surface).replace(/\D/g, '')
-                    : "N/A";
+
+                const surface =
+                    prop?.surface
+                        ? String(prop.surface).replace(/\D/g, '')
+                        : 'N/A';
 
 
+                // ------------------------------------------------
                 // PRICE
+                // ------------------------------------------------
 
                 const priceObj =
                     realEstate?.price;
 
-                let price = "N/A";
+
+                let price = 'N/A';
+
 
                 if (priceObj) {
 
                     if (priceObj.visible === false) {
 
-                        price = "Su richiesta";
+                        price = 'Su richiesta';
 
                     } else if (priceObj.value != null) {
 
@@ -230,7 +210,9 @@
                 }
 
 
+                // ------------------------------------------------
                 // EXCEL HYPERLINK
+                // ------------------------------------------------
 
                 const excelTitle =
                     `=COLLEG.IPERTESTUALE("${link}";"${title}")`;
@@ -238,37 +220,45 @@
 
                 return `${excelTitle}\t${surface}\t${price}`;
 
-            }).join("\n");
+            }).join('\n');
 
 
-            console.log(
-                `Copied ${listings.length} listings`
-            );
-
-            console.log(output);
-
+            // ====================================================
+            // COPY TO CLIPBOARD
+            // ====================================================
 
             GM_setClipboard(output);
 
-            alert(
-                `${listings.length} annunci copiati negli appunti!\n\n` +
-                "Puoi incollarli direttamente in Excel."
+
+            console.log(
+                `Page ${currentPage}: ${listings.length} listings copied.`
             );
 
-        } catch (err) {
+
+            alert(
+                `${listings.length} annunci della pagina ${currentPage} ` +
+                `copiati negli appunti!\n\n` +
+                `Puoi incollarli direttamente in Excel.`
+            );
+
+
+        } catch (error) {
 
             console.error(
-                "Errore durante il recupero dei dati:",
-                err
+                'Errore durante il recupero dei dati:',
+                error
             );
 
+
             alert(
-                `Errore durante il recupero dei dati:\n${err.message}`
+                `Errore durante il recupero dei dati:\n\n` +
+                error.message
             );
+
 
         } finally {
 
-            btn.textContent = "Copy!";
+            btn.textContent = 'Copy!';
         }
 
     });
